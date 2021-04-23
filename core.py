@@ -214,7 +214,7 @@ class Video:
                 extra_input = logo_path
 
                 # resize logo
-                prefix = f'[1][0]scale2ref=w=-1:h=main_h*sqrt((iw*ih*{size})/(main_w*main_h))[logo][input];'
+                prefix = f'[1][0]scale2ref=w=oh*mdar:h=main_h*sqrt((iw*ih*{size})/(main_w*main_h))[logo][input];'
 
                 # apply previous transform
                 if len(options):
@@ -347,7 +347,7 @@ class pQueue(Queue):
 
 
 if __name__ == '__main__':
-    v = Video('inputs/a.mp4')
+    v = Video('a.mp4')
     thumb = v.get_thumbnail_with_subprocess(100, 200)
     # ImageHelper.show(thumb)
 
