@@ -18,8 +18,8 @@ python main.py
 ### 사용법
 
 <p align="center">
-<img src="https://i.imgur.com/CJtpr6E.jpeg" height=300>
-<img src="https://i.imgur.com/f3H1J0U.gif" height=300>
+<img src="https://i.imgur.com/HKRNtxe.jpeg" width="320">
+<img src="https://i.imgur.com/f3H1J0U.gif" width="320">
 </p>
 
 1. 비디오/디렉토리 선택, 삭제, 초기화
