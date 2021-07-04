@@ -24,7 +24,7 @@ WINDOW_TITLE = 'MMLAB Video Editor'
 WINDOW_POS_X = 100  # - 2560
 WINDOW_POS_Y = 100
 WINDOW_WIDTH = 1280
-WINDOW_HEIGHT = 800
+WINDOW_HEIGHT = 850
 
 VIDEO_TABLE_WIDTH = 280
 
@@ -47,6 +47,9 @@ FILE_DIALOG_ROOT = os.path.abspath(os.curdir)
 PRESET_DEFAULT_ROOT = os.path.abspath(os.path.curdir)
 PRESET_DEFAULT_FILE = os.path.join(PRESET_DEFAULT_ROOT, 'preset.pkl')
 
+CAPTION_DEFAULT_ROOT = os.path.abspath(os.path.curdir)
+CAPTION_DEFAULT_FILE = os.path.join(CAPTION_DEFAULT_ROOT, 'caption.png')
+
 TARGET_DEFAULT_ROOT = os.path.join(FILE_DIALOG_ROOT, 'outputs')
 
 SCRIPT_EXT = 'bat'
@@ -61,3 +64,5 @@ THUMBNAIL_RESPONSE_TIME = 1000
 VIDEO_SELECTED_COLOR = COLOR_GREEN
 
 LOGO_DEFAULT = resource_path('default_logo.jpg')
+FONT_DEFAULT = resource_path('NanumMyeongjo.ttf')
+CAPTION_DEFAULT = ''

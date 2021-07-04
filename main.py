@@ -3,7 +3,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 import qtawesome as qta
 
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 import pickle as pkl
 import subprocess
 import json
@@ -267,7 +267,39 @@ class VideoEditor(QWidget):
         logo_layout.addWidget(QLabel('Y'), 3, 0, 1, 1)
         logo_layout.addWidget(self.logo_y_slider, 3, 1, 1, 4)
         logo_layout.addWidget(self.logo_y_slider_label, 3, 5, 1, 1)
+
         self.logo_group.setLayout(logo_layout)
+
+        # Transforms - caption
+        self.caption_group = QGroupBox('Caption')
+        self.caption_group.setCheckable(True)
+        self.caption_group.setChecked(False)
+
+        # self.caption_path.setReadOnly(True)
+        # self.caption_path_button = QToolButton()
+        # self.caption_reset_button = QToolButton()
+        # self.caption_reset_button.setIcon(qta.icon('fa5s.sync-alt',
+        #                                             options=[{'scale_factor': 1}]))
+        # self.caption_reset_button.setToolTip('Load default logo image.')
+        # self.caption_path_button.setIcon(qta.icon('ei.folder-open',
+        #                                            options=[{'scale_factor': 1}]))
+        # self.caption_path_button.setToolTip('Browse caption image. (png file)')
+
+        self.caption_size = QComboBox()
+        self.caption_size.addItems(['12 pt', '16 pt', '20 pt'])
+        self.caption_input = QLineEdit()
+        self.caption_save = QToolButton()
+        self.caption_save.setIcon(qta.icon('fa5s.save',
+                                            options=[{'scale_factor': 1}]))
+
+        caption_layout = QGridLayout()
+        caption_layout.addWidget(QLabel('FontSize'), 0, 0, 1, 1)
+        caption_layout.addWidget(self.caption_size, 0, 1, 1, 5)
+
+        caption_layout.addWidget(QLabel('Text'), 1, 0, 1, 1)
+        caption_layout.addWidget(self.caption_input, 1, 1, 1, 5)
+
+        self.caption_group.setLayout(caption_layout)
 
         # Transforms - Border
         self.border_group = QGroupBox('Border')
@@ -321,7 +353,7 @@ class VideoEditor(QWidget):
 
         self.resolution_preset = QRadioButton('Preset')
         self.resolution_preset_combobox = QComboBox()
-        self.resolution_preset_combobox.addItems(['CIF', 'QCIF'])
+        self.resolution_preset_combobox.addItems(['QCIF', 'CIF', 'SD', 'HD', '4K-UHD'])
 
         self.resolution_value = QRadioButton('Value')
         self.resolution_value_w = QLineEdit('')
@@ -356,10 +388,16 @@ class VideoEditor(QWidget):
         transform_layout.addWidget(grayscale_group, 4, 1, 1, 1)
 
         transform_layout.addWidget(self.logo_group, 5, 0, 1, 2)
-        transform_layout.addWidget(self.border_group, 6, 0, 1, 2)
-        transform_layout.addWidget(self.crop_group, 7, 0, 1, 2)
-        transform_layout.addWidget(self.resolution_group, 8, 0, 1, 2)
-        transform_layout.addWidget(reset_btn, 9, 1, 1, 1)
+        transform_layout.addWidget(self.caption_group, 6, 0, 1, 2)
+        transform_layout.addWidget(self.border_group, 7, 0, 1, 2)
+        transform_layout.addWidget(self.crop_group, 8, 0, 1, 2)
+        transform_layout.addWidget(self.resolution_group, 9, 0, 1, 2)
+        transform_layout.addWidget(reset_btn, 10, 1, 1, 1)
+
+        # transform_layout.addWidget(self.border_group, 6, 0, 1, 2)
+        # transform_layout.addWidget(self.crop_group, 7, 0, 1, 2)
+        # transform_layout.addWidget(self.resolution_group, 8, 0, 1, 2)
+        # transform_layout.addWidget(reset_btn, 9, 1, 1, 1)
 
         # Apply Btn
         control_btn_group = QWidget()
@@ -399,6 +437,7 @@ class VideoEditor(QWidget):
         self.canvas.setFixedWidth(CANVAS_WIDTH)
         self.canvas.setFixedHeight(CANVAS_HEIGHT)
         self.info.setFixedWidth(INFO_WIDTH)
+        self.center() # 삭제할것
 
         ##############################################
         # Events
@@ -436,6 +475,10 @@ class VideoEditor(QWidget):
         self.logo_x_slider.valueChanged.connect(self.e_logoChanged)
         self.logo_y_slider.valueChanged.connect(self.e_logoChanged)
 
+        self.caption_group.clicked.connect(self.e_captionChanged)
+        self.caption_input.textChanged.connect(self.e_captionChanged)
+        self.caption_size.currentIndexChanged.connect(self.e_captionChanged)
+
         self.border_group.clicked.connect(self.e_borderChanged)
         self.border_w_slider.valueChanged.connect(self.e_borderChanged)
         self.border_h_slider.valueChanged.connect(self.e_borderChanged)
@@ -451,6 +494,12 @@ class VideoEditor(QWidget):
         self.resolution_value.clicked.connect(self.e_resolutionChanged)
         self.resolution_value_w.textChanged.connect(self.e_resolutionChanged)
         self.resolution_value_h.textChanged.connect(self.e_resolutionChanged)
+
+    def center(self):
+        frame_info = self.frameGeometry()
+        display_center = QDesktopWidget().availableGeometry().center()
+        frame_info.moveCenter(display_center)
+        self.move(frame_info.topLeft())
 
     def table_add_row(self, path):
         name = os.path.basename(path)
@@ -722,9 +771,27 @@ class VideoEditor(QWidget):
         self.logo_path.setText(LOGO_DEFAULT)
 
     def e_logo_btn_clicked(self):
-        path, _ = QFileDialog.getOpenFileName(self, 'Select Logo Image', FILE_DIALOG_ROOT, '*.jpg')
+        path, _ = QFileDialog.getOpenFileName(self, 'Select Logo Image', FILE_DIALOG_ROOT, 'Image Files (*.jpg *.png)')
         if path != '':
             self.logo_path.setText(path)
+
+    def e_captionChanged(self):
+        print('[Event - Caption changed]')
+        key = 'caption'
+        self.core.remove_transform(key)
+
+        if self.caption_group.isChecked():
+            text = self.caption_input.text()
+            pt = int(self.caption_size.currentText().replace(' pt', ''))
+            font_path = FONT_DEFAULT
+
+            self.core.add_transform({'name': 'caption',
+                                     'param': {'text': text,
+                                               'pt': pt,
+                                               'font_path': font_path}})
+
+        tt = self.core.apply_thumbnail_transform(CANVAS_WIDTH, CANVAS_HEIGHT)
+        self.viewer_show_preview(tt)
 
     def e_borderChanged(self, value):
         print('[Event - Border changed]')
