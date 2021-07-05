@@ -86,9 +86,11 @@ def logo(im, logo, size, x, y):
     return t_im
 
 
-def caption(im, text, pt, font_path):
+def caption(im, text, pt, font_path, v_w):
     l = im.copy()  # fg
     w, h = l.size
+
+    pt = int(pt / v_w * w)
 
     font = ImageFont.truetype(font_path, pt)
     t_w, t_h = font.getsize(text)

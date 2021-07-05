@@ -275,16 +275,6 @@ class VideoEditor(QWidget):
         self.caption_group.setCheckable(True)
         self.caption_group.setChecked(False)
 
-        # self.caption_path.setReadOnly(True)
-        # self.caption_path_button = QToolButton()
-        # self.caption_reset_button = QToolButton()
-        # self.caption_reset_button.setIcon(qta.icon('fa5s.sync-alt',
-        #                                             options=[{'scale_factor': 1}]))
-        # self.caption_reset_button.setToolTip('Load default logo image.')
-        # self.caption_path_button.setIcon(qta.icon('ei.folder-open',
-        #                                            options=[{'scale_factor': 1}]))
-        # self.caption_path_button.setToolTip('Browse caption image. (png file)')
-
         self.caption_size = QComboBox()
         self.caption_size.addItems(['12 pt', '16 pt', '20 pt'])
         self.caption_input = QLineEdit()
@@ -576,6 +566,10 @@ class VideoEditor(QWidget):
         self.logo_y_slider_label.setText(f'{0:4} %')
         self.logo_size.setCurrentIndex(0)
         self.logo_path.setText(LOGO_DEFAULT)
+
+        self.caption_group.setChecked(False)
+        self.caption_size.setCurrentIndex(0)
+        self.caption_input.setText(CAPTION_DEFAULT)
 
         self.border_group.setChecked(False)
         self.border_w_slider.setValue(0)

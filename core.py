@@ -64,7 +64,7 @@ class Core:
         self.transforms = []
 
     def apply_thumbnail_transform(self, max_w, max_h):
-        tt = ImageHelper.run_transform_with_PIL(self.thumbnail.copy(), self.transforms)
+        tt = ImageHelper.run_transform_with_PIL(self.thumbnail.copy(), self.transforms, self.video)
         tt = ImageHelper.thumbnail(tt, max_w, max_h)
 
         return tt
@@ -219,14 +219,9 @@ class Video:
             elif name == 'caption':
                 text = param['text']
                 pt = param['pt']
-                font_path = param['font_path']
-
-                print('text :', text)
-                print('pt :', pt)
-                print('font_path :', font_path)
+                font_path = param['font_path'].replace('\\', '/')
 
                 options += [f"drawtext=text='{text}':x=(W-tw)/2:y=(H-th)*3/4:fontfile={font_path}:fontsize={pt}:fontcolor=white"]
-                # options += [f"drawtext=text='{text}':x=iw/2:y=ih*3/4:fontfile={font_path}:fontsize={pt}:fontcolor=white"]
 
             elif name == 'logo':
                 logo_path = param['path']
@@ -305,7 +300,7 @@ class ImageHelper:
     #     plt.show()
 
     @classmethod
-    def run_transform_with_PIL(cls, im, transforms):
+    def run_transform_with_PIL(cls, im, transforms, vi):
         for t in transforms:
             name, param = t['name'], t['param']
             if name == 'brightness':
@@ -360,7 +355,8 @@ class ImageHelper:
                 im = itrn.resize(im, nw, nh)
 
             elif name == 'caption':
-                im = itrn.caption(im, param['text'], param['pt'], param['font_path'])
+                v_w = vi.meta['width']
+                im = itrn.caption(im, param['text'], param['pt'], param['font_path'], v_w)
 
             elif name == 'logo':
                 im = itrn.logo(im,
