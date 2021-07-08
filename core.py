@@ -218,10 +218,14 @@ class Video:
 
             elif name == 'caption':
                 text = param['text']
-                pt = param['pt']
                 font_path = param['font_path'].replace('\\', '/')
+                pt = param['pt']
+                font_color = param['font_color']
 
-                options += [f"drawtext=text='{text}':x=(W-tw)/2:y=(H-th)*3/4:fontfile={font_path}:fontsize={pt}:fontcolor=white"]
+                x = param['x']
+                y = param['y']
+
+                options += [f"drawtext=text='{text}':x=(W-tw)*{x}/100:y=(H-th)*{y}/100:fontfile={font_path}:fontsize={pt}:fontcolor={font_color}"]
 
             elif name == 'logo':
                 logo_path = param['path']
@@ -356,7 +360,7 @@ class ImageHelper:
 
             elif name == 'caption':
                 v_w = vi.meta['width']
-                im = itrn.caption(im, param['text'], param['pt'], param['font_path'], v_w)
+                im = itrn.caption(im, param['text'], param['font_path'], param['pt'], param['font_color'], param['x'], param['y'], v_w)
 
             elif name == 'logo':
                 im = itrn.logo(im,

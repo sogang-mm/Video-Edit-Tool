@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
+from PyQt5 import QtGui
 import qtawesome as qta
 
 from PIL import Image, ImageDraw, ImageFont
@@ -281,13 +282,38 @@ class VideoEditor(QWidget):
         self.caption_save = QToolButton()
         self.caption_save.setIcon(qta.icon('fa5s.save',
                                             options=[{'scale_factor': 1}]))
+        self.caption_color = QToolButton()
+        self.caption_color.setStyleSheet('QWidget { background-color: %s }' % CAPTION_COLOR_DEFAULT)
+
+        self.caption_x_slider = QSlider(Qt.Horizontal)
+        self.caption_x_slider.setRange(0, 100)
+        self.caption_x_slider.setValue(50)
+        self.caption_x_slider.setSingleStep(5)
+        self.caption_x_slider_label = QLabel(f'{50:4} %')
+        self.caption_x_slider_label.setAlignment(Qt.AlignCenter)
+
+        self.caption_y_slider = QSlider(Qt.Horizontal)
+        self.caption_y_slider.setRange(0, 100)
+        self.caption_y_slider.setValue(75)
+        self.caption_y_slider.setSingleStep(5)
+        self.caption_y_slider_label = QLabel(f'{75:4} %')
+        self.caption_y_slider_label.setAlignment(Qt.AlignCenter)
 
         caption_layout = QGridLayout()
-        caption_layout.addWidget(QLabel('FontSize'), 0, 0, 1, 1)
-        caption_layout.addWidget(self.caption_size, 0, 1, 1, 5)
+        caption_layout.addWidget(QLabel('Font'), 0, 0, 1, 1)
+        caption_layout.addWidget(self.caption_size, 0, 1, 1, 4)
+        caption_layout.addWidget(self.caption_color, 0, 5, 1, 1)
 
         caption_layout.addWidget(QLabel('Text'), 1, 0, 1, 1)
         caption_layout.addWidget(self.caption_input, 1, 1, 1, 5)
+
+        caption_layout.addWidget(QLabel('X'), 2, 0, 1, 1)
+        caption_layout.addWidget(self.caption_x_slider, 2, 1, 1, 4)
+        caption_layout.addWidget(self.caption_x_slider_label, 2, 5, 1, 1)
+
+        caption_layout.addWidget(QLabel('Y'), 3, 0, 1, 1)
+        caption_layout.addWidget(self.caption_y_slider, 3, 1, 1, 4)
+        caption_layout.addWidget(self.caption_y_slider_label, 3, 5, 1, 1)
 
         self.caption_group.setLayout(caption_layout)
 
@@ -468,6 +494,9 @@ class VideoEditor(QWidget):
         self.caption_group.clicked.connect(self.e_captionChanged)
         self.caption_input.textChanged.connect(self.e_captionChanged)
         self.caption_size.currentIndexChanged.connect(self.e_captionChanged)
+        self.caption_color.clicked.connect(self.e_cationColor)
+        self.caption_x_slider.valueChanged.connect(self.e_captionChanged)
+        self.caption_y_slider.valueChanged.connect(self.e_captionChanged)
 
         self.border_group.clicked.connect(self.e_borderChanged)
         self.border_w_slider.valueChanged.connect(self.e_borderChanged)
@@ -569,7 +598,12 @@ class VideoEditor(QWidget):
 
         self.caption_group.setChecked(False)
         self.caption_size.setCurrentIndex(0)
+        self.caption_color.setStyleSheet('QWidget { background-color: %s }' % CAPTION_COLOR_DEFAULT)
         self.caption_input.setText(CAPTION_DEFAULT)
+        self.caption_x_slider.setValue(50)
+        self.caption_x_slider_label.setText(f'{0:4} %')
+        self.caption_y_slider.setValue(75)
+        self.caption_y_slider_label.setText(f'{0:4} %')
 
         self.border_group.setChecked(False)
         self.border_w_slider.setValue(0)
@@ -776,16 +810,34 @@ class VideoEditor(QWidget):
 
         if self.caption_group.isChecked():
             text = self.caption_input.text()
-            pt = int(self.caption_size.currentText().replace(' pt', ''))
             font_path = FONT_DEFAULT
+            pt = int(self.caption_size.currentText().replace(' pt', ''))
+            font_color = self.caption_color.palette().color(QtGui.QPalette.Background).name()
+
+            x = self.caption_x_slider.value()
+            y = self.caption_y_slider.value()
 
             self.core.add_transform({'name': 'caption',
                                      'param': {'text': text,
                                                'pt': pt,
-                                               'font_path': font_path}})
+                                               'font_path': font_path,
+                                               'font_color': font_color,
+                                               'x': x,
+                                               'y': y}})
+
+            self.caption_x_slider_label.setText(f'{x:4} %')
+            self.caption_y_slider_label.setText(f'{y:4} %')
 
         tt = self.core.apply_thumbnail_transform(CANVAS_WIDTH, CANVAS_HEIGHT)
         self.viewer_show_preview(tt)
+
+    def e_cationColor(self):
+        col = QColorDialog.getColor()
+
+        if col.isValid():
+            self.caption_color.setStyleSheet('QWidget { background-color: %s }' % col.name())
+
+            self.e_captionChanged()
 
     def e_borderChanged(self, value):
         print('[Event - Border changed]')

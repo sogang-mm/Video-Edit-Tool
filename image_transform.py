@@ -86,7 +86,7 @@ def logo(im, logo, size, x, y):
     return t_im
 
 
-def caption(im, text, pt, font_path, v_w):
+def caption(im, text, font_path, pt, font_color, x, y, v_w):
     l = im.copy()  # fg
     w, h = l.size
 
@@ -95,7 +95,7 @@ def caption(im, text, pt, font_path, v_w):
     font = ImageFont.truetype(font_path, pt)
     t_w, t_h = font.getsize(text)
     draw = ImageDraw.Draw(l)
-    draw.text(((w - t_w)/2, (h - t_h)*3/4), text, fill="white", font=font, align='center')
+    draw.text(((w - t_w) * x / 100, (h - t_h) * y / 100), text, fill=font_color, font=font, align='center')
 
     return l
 
