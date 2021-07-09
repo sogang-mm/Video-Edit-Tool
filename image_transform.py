@@ -1,4 +1,4 @@
-from PIL import Image, ImageEnhance, ImageOps
+from PIL import Image, ImageEnhance, ImageOps, ImageFont, ImageDraw
 from datetime import datetime
 import math
 
@@ -84,6 +84,20 @@ def logo(im, logo, size, x, y):
     t_im.paste(nl, (lx, ly))
 
     return t_im
+
+
+def caption(im, text, font_path, pt, font_color, x, y, v_w):
+    l = im.copy()  # fg
+    w, h = l.size
+
+    pt = int(pt / v_w * w)
+
+    font = ImageFont.truetype(font_path, pt)
+    t_w, t_h = font.getsize(text)
+    draw = ImageDraw.Draw(l)
+    draw.text(((w - t_w) * x / 100, (h - t_h) * y / 100), text, fill=font_color, font=font, align='center')
+
+    return l
 
 
 def border(im, bw, bh):

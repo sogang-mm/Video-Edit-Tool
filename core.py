@@ -64,7 +64,7 @@ class Core:
         self.transforms = []
 
     def apply_thumbnail_transform(self, max_w, max_h):
-        tt = ImageHelper.run_transform_with_PIL(self.thumbnail.copy(), self.transforms)
+        tt = ImageHelper.run_transform_with_PIL(self.thumbnail.copy(), self.transforms, self.video)
         tt = ImageHelper.thumbnail(tt, max_w, max_h)
 
         return tt
@@ -185,11 +185,13 @@ class Video:
             elif name == 'border':
                 bw = param['w'] / 100
                 bh = param['h'] / 100
-                options += [f'pad=w=(1+{bw})*iw:h=(1+{bh})*ih:x={bw}*iw/2:y={bh}*ih/2:color=black']
+                # options += [f'pad=w=(1+{bw})*iw:h=(1+{bh})*ih:x={bw}*iw/2:y={bh}*ih/2:color=black'] --> original(50%) 960x540 => 1440x810
+                options += [f'scale=iw*(1-{bw}):ih*(1-{bh}), pad=w=iw/(1-{bw}):h=ih/(1-{bh}):x=iw/(1-{bw})*{bw}/2:y=ih/(1-{bh})*{bh}/2:color=black']
 
             elif name == 'crop':
                 r = param['value'] / 100
-                options += [f'crop=(1-{r})*iw:(1-{r})*ih:{r}*iw/2:{r}*ih/2']
+                # options += [f'crop=(1-{r})*iw:(1-{r})*ih:{r}*iw/2:{r}*ih/2'] --> original(50%) 950x540 => 480x270
+                options += [f'scale=iw*(1+{r}):ih*(1+{r}), crop=iw/(1+{r}):ih/(1+{r}):(iw/(1+{r}))*{r}/2:(ih/(1+{r}))*{r}/2']
 
             elif name == 'resolution':
                 if param['selector'] == 'ratio':
@@ -202,8 +204,28 @@ class Video:
                     elif param['value'] == 'QCIF':
                         options += ["scale = 'if(gte(iw\,ih)\,176\,144)':'if(gte(iw\,ih)\,144\,176)'"]
 
+                    elif param['value'] == 'SD':
+                        options += ["scale = 'if(gte(iw\,ih)\,320\,240)':'if(gte(iw\,ih)\,240\,320)'"]
+
+                    elif param['value'] == 'HD':
+                        options += ["scale = 'if(gte(iw\,ih)\,1280\,720)':'if(gte(iw\,ih)\,720\,1280)'"]
+
+                    elif param['value'] == '4K-UHD':
+                        options += ["scale = 'if(gte(iw\,ih)\,3840\,2160)':'if(gte(iw\,ih)\,2160\,3840)'"]
+
                 elif param['selector'] == 'value':
                     options += [f'scale={param["w"]}:{param["h"]}']
+
+            elif name == 'caption':
+                text = param['text']
+                font_path = param['font_path'].replace('\\', '/')
+                pt = param['pt']
+                font_color = param['font_color']
+
+                x = param['x']
+                y = param['y']
+
+                options += [f"drawtext=text='{text}':x=(W-tw)*{x}/100:y=(H-th)*{y}/100:fontfile={font_path}:fontsize={pt}:fontcolor={font_color}"]
 
             elif name == 'logo':
                 logo_path = param['path']
@@ -224,6 +246,7 @@ class Video:
 
         filter_complex_param = ','.join(options)
         format = ['ffmpeg', '-hide_banner', '-y', '-i', 'input_video_path']
+
         if extra_input is not None:
             format += ['-i', extra_input]
         format += ['-filter_complex', filter_complex_param, 'target_video_path']
@@ -281,7 +304,7 @@ class ImageHelper:
     #     plt.show()
 
     @classmethod
-    def run_transform_with_PIL(cls, im, transforms):
+    def run_transform_with_PIL(cls, im, transforms, vi):
         for t in transforms:
             name, param = t['name'], t['param']
             if name == 'brightness':
@@ -321,15 +344,30 @@ class ImageHelper:
                     elif param['value'] == 'QCIF':
                         nw, nh = (176, 144) if w > h else (144, 176)
 
+                    elif param['value'] == 'SD':
+                        nw, nh = (320, 240) if w > h else (240, 320)
+
+                    elif param['value'] == 'HD':
+                        nw, nh = (1280, 720) if w > h else (720, 1280)
+
+                    elif param['value'] == '4K-UHD':
+                        nw, nh = (3840, 2160) if w > h else (2160, 3840)
+
                 if param['selector'] == 'value':
                     nw, nh = int(param['w']), int(param['h'])
 
                 im = itrn.resize(im, nw, nh)
+
+            elif name == 'caption':
+                v_w = vi.meta['width']
+                im = itrn.caption(im, param['text'], param['font_path'], param['pt'], param['font_color'], param['x'], param['y'], v_w)
+
             elif name == 'logo':
                 im = itrn.logo(im,
                                param['path'],
                                param['size'],
                                param['x'], param['y'])
+
         return im
 
     @classmethod
