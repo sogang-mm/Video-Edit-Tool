@@ -5,10 +5,8 @@ from PyQt5 import QtGui
 import qtawesome as qta
 
 from PIL import Image, ImageDraw, ImageFont
-import pickle as pkl
 import subprocess
 import json
-import sys
 
 from core import Core, ImageHelper, pQueue
 from canvas import Canvas
@@ -281,7 +279,7 @@ class VideoEditor(QWidget):
         self.caption_input = QLineEdit()
         self.caption_save = QToolButton()
         self.caption_save.setIcon(qta.icon('fa5s.save',
-                                            options=[{'scale_factor': 1}]))
+                                           options=[{'scale_factor': 1}]))
         self.caption_color = QToolButton()
         self.caption_color.setStyleSheet('QWidget { background-color: %s }' % CAPTION_COLOR_DEFAULT)
 
@@ -453,7 +451,7 @@ class VideoEditor(QWidget):
         self.canvas.setFixedWidth(CANVAS_WIDTH)
         self.canvas.setFixedHeight(CANVAS_HEIGHT)
         self.info.setFixedWidth(INFO_WIDTH)
-        self.center() # 삭제할것
+        self.center()  # 삭제할것
 
         ##############################################
         # Events
@@ -645,17 +643,21 @@ class VideoEditor(QWidget):
 
     # validate preset file
     def e_load_preset_btn_clicked(self):
-        path, _ = QFileDialog.getOpenFileName(self, 'Load Preset', PRESET_DEFAULT_ROOT, '*.pkl')
+        path, _ = QFileDialog.getOpenFileName(self, 'Load Preset', PRESET_DEFAULT_ROOT, '*.json')
         if path != '':
             self.preset_edit_path.setText(path)
-            preset_file = open(path, "rb")
-            preset = pkl.load(preset_file)
-            preset_file.close()
 
+            # preset_file = open(path, "rb")
+            # preset = pkl.load(preset_file)
+            # preset_file.close()
+            preset = json.load(open(path, 'r'))
+            if not isinstance(preset, dict) or not preset.get('transform') or not isinstance(preset['transform'], list):
+                preset = {'transform': []}
             self.e_reset_transform()
 
-            for p in preset:
-                name, param = p['name'], p['param']
+            for p in preset['transform']:
+                name = p.get('name')
+                param = p.get('param')
                 if name == 'brightness':
                     self.brightness.setCurrentText(f"{param['value']:+}")
 
@@ -701,14 +703,14 @@ class VideoEditor(QWidget):
                         self.resolution_preset_combobox.setCurrentText(param['value'])
                     if param['selector'] == 'value':
                         self.resolution_value.setChecked(True)
-                        self.resolution_value_w.setCurrentText(f"{param['w']}")
-                        self.resolution_value_h.setCurrentText(f"{param['h']}")
+                        self.resolution_value_w.setText(f"{param['w']}")
+                        self.resolution_value_h.setText(f"{param['h']}")
+
 
     def e_save_preset_btn_clicked(self):
         path, _ = QFileDialog.getSaveFileName(self, 'Save Preset', PRESET_DEFAULT_FILE)
         if path != '':
-            with open(path, 'wb') as preset:
-                pkl.dump(self.core.transforms, preset)
+            self.core.save_transforms(path)
             self.preset_edit_path.setText(path)
 
     def e_brigtnessChanged(self, value):
@@ -890,14 +892,25 @@ class VideoEditor(QWidget):
 
             if self.resolution_value.isChecked():
                 w = self.resolution_value_w.text()
-                h = self.resolution_value_h.text()
-                if w == '' or w == '0' or h == '' or h == '0':
-                    w, h = self.core.thumbnail.size
+                if w == '' or w == '0':
+                    w, _ = self.core.thumbnail.size
                     self.resolution_value_w.setText(str(w))
+
+                h = self.resolution_value_h.text()
+                if h == '' or h == '0':
+                    _, h = self.core.thumbnail.size
                     self.resolution_value_h.setText(str(h))
-                else:
-                    self.core.add_transform({'name': key,
-                                             'param': {'selector': 'value', 'w': int(w), 'h': int(h)}})
+
+                if w != '0' and h != 0 and w != '' and h != '':
+                    self.core.add_transform({'name': key, 'param': {'selector': 'value', 'w': int(w), 'h': int(h)}})
+
+                # if w == '' or w == '0' or h == '' or h == '0':
+                #     w, h = self.core.thumbnail.size
+                #     self.resolution_value_w.setText(str(w))
+                #     self.resolution_value_h.setText(str(h))
+                # else:
+                #     self.core.add_transform({'name': key,
+                #                              'param': {'selector': 'value', 'w': int(w), 'h': int(h)}})
 
         tt = self.core.apply_thumbnail_transform(CANVAS_WIDTH, CANVAS_HEIGHT)
         self.viewer_show_preview(tt)
@@ -1201,6 +1214,7 @@ def main():
     win = VideoEditor()
     win.show()
     sys.exit(app.exec_())
+
 
 if __name__ == '__main__':
     main()

@@ -45,7 +45,7 @@ VIDEO_EXTENSION_FILTER = 'All Media Files |' + ';'.join([f'*{i}' for i in VIDEO_
 FILE_DIALOG_ROOT = os.path.abspath(os.curdir)
 
 PRESET_DEFAULT_ROOT = os.path.abspath(os.path.curdir)
-PRESET_DEFAULT_FILE = os.path.join(PRESET_DEFAULT_ROOT, 'preset.pkl')
+PRESET_DEFAULT_FILE = os.path.join(PRESET_DEFAULT_ROOT, 'preset.json')
 
 TARGET_DEFAULT_ROOT = os.path.join(FILE_DIALOG_ROOT, 'outputs')
 

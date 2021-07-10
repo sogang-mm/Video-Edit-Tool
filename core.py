@@ -4,6 +4,10 @@ from PIL import ImageQt
 import subprocess
 import image_transform as itrn
 from queue import Queue
+import json
+import pickle as pkl
+
+
 # import matplotlib.pyplot as plt
 
 
@@ -63,6 +67,11 @@ class Core:
     def clear_transforms(self):
         self.transforms = []
 
+    def save_transforms(self, path):
+        # with open(path, 'wb') as preset:
+        #     pkl.dump(self.core.transforms, preset)
+        json.dump({'transform': self.transforms}, open(path, 'w'), indent=2)
+
     def apply_thumbnail_transform(self, max_w, max_h):
         tt = ImageHelper.run_transform_with_PIL(self.thumbnail.copy(), self.transforms, self.video)
         tt = ImageHelper.thumbnail(tt, max_w, max_h)
@@ -75,6 +84,7 @@ class Core:
 
     def get_ffmpeg_transform_command_format(self):
         return self.video.build_ffmpeg_transform_command_format(self.transforms)
+
 
 class Video:
     def __init__(self, path):
@@ -108,7 +118,7 @@ class Video:
 
             if meta['frame_rate'] == 0 and meta['frame_count'] != 0 and meta['frame_rate'] != 0:
                 meta['frame_rate'] = meta['frame_count'] / meta['duration']
-        except Exception as e :
+        except Exception as e:
             print(f'Fail to parse video - {path} {e}')
 
         return valid, meta
@@ -186,12 +196,14 @@ class Video:
                 bw = param['w'] / 100
                 bh = param['h'] / 100
                 # options += [f'pad=w=(1+{bw})*iw:h=(1+{bh})*ih:x={bw}*iw/2:y={bh}*ih/2:color=black'] --> original(50%) 960x540 => 1440x810
-                options += [f'scale=iw*(1-{bw}):ih*(1-{bh}), pad=w=iw/(1-{bw}):h=ih/(1-{bh}):x=iw/(1-{bw})*{bw}/2:y=ih/(1-{bh})*{bh}/2:color=black']
+                options += [
+                    f'scale=iw*(1-{bw}):ih*(1-{bh}), pad=w=iw/(1-{bw}):h=ih/(1-{bh}):x=iw/(1-{bw})*{bw}/2:y=ih/(1-{bh})*{bh}/2:color=black']
 
             elif name == 'crop':
                 r = param['value'] / 100
                 # options += [f'crop=(1-{r})*iw:(1-{r})*ih:{r}*iw/2:{r}*ih/2'] --> original(50%) 950x540 => 480x270
-                options += [f'scale=iw*(1+{r}):ih*(1+{r}), crop=iw/(1+{r}):ih/(1+{r}):(iw/(1+{r}))*{r}/2:(ih/(1+{r}))*{r}/2']
+                options += [
+                    f'scale=iw*(1+{r}):ih*(1+{r}), crop=iw/(1+{r}):ih/(1+{r}):(iw/(1+{r}))*{r}/2:(ih/(1+{r}))*{r}/2']
 
             elif name == 'resolution':
                 if param['selector'] == 'ratio':
@@ -225,7 +237,8 @@ class Video:
                 x = param['x']
                 y = param['y']
 
-                options += [f"drawtext=text='{text}':x=(W-tw)*{x}/100:y=(H-th)*{y}/100:fontfile={font_path}:fontsize={pt}:fontcolor={font_color}"]
+                options += [
+                    f"drawtext=text='{text}':x=(W-tw)*{x}/100:y=(H-th)*{y}/100:fontfile={font_path}:fontsize={pt}:fontcolor={font_color}"]
 
             elif name == 'logo':
                 logo_path = param['path']
@@ -249,7 +262,7 @@ class Video:
 
         if extra_input is not None:
             format += ['-i', extra_input]
-        format += ['-filter_complex', filter_complex_param, 'target_video_path']
+        format += ['-filter_complex', f'{filter_complex_param}', 'target_video_path']
 
         return format
 
@@ -360,7 +373,8 @@ class ImageHelper:
 
             elif name == 'caption':
                 v_w = vi.meta['width']
-                im = itrn.caption(im, param['text'], param['font_path'], param['pt'], param['font_color'], param['x'], param['y'], v_w)
+                im = itrn.caption(im, param['text'], param['font_path'], param['pt'], param['font_color'], param['x'],
+                                  param['y'], v_w)
 
             elif name == 'logo':
                 im = itrn.logo(im,
@@ -373,6 +387,7 @@ class ImageHelper:
     @classmethod
     def to_pixmap(cls, im):
         return ImageQt.toqpixmap(im)
+
 
 class pQueue(Queue):
     def __init__(self, items, maxsize=0):
@@ -389,16 +404,16 @@ if __name__ == '__main__':
     thumb = v.get_thumbnail_with_subprocess(100, 200)
     # ImageHelper.show(thumb)
 
-    trn = [
+    trn = {'transform': [
         {'name': 'logo',
          'param':
              {'path': 'C:\\Users\\ms\\Documents\\ShareX\\Screenshots\\2021-04\\b.jpg',
               'x': 30,
               'y': 50,
               'size': 10}},
-        {'name': 'brightness', 'param': {'value': 20}}]
+        {'name': 'brightness', 'param': {'value': 20}}]}
 
-    o = v.build_ffmpeg_transform_command('o.mp4', transforms=trn)
+    o = v.build_ffmpeg_transform_command('o.mp4', transforms=trn['transform'])
     print(o)
 
-    v.run_transform_with_subprocess('p.mp4', transforms=trn)
+    v.run_transform_with_subprocess('p.mp4', transforms=trn['transform'])
