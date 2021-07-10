@@ -27,3 +27,12 @@ python main.py
 3. 단일 비디오/모든 비디오에 변형 적용, ffmpeg 명령어 출력
 
 
+### Command Line Interface 
+
+```
+python transform_videos.py <비디오> <save 디렉토리> <transform.json> <suffix> 
+```
+##### Windows 
+```
+transform_videos.exe <비디오> <save 디렉토리> <transform.json> <suffix> 
+```
