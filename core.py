@@ -206,9 +206,10 @@ class Video:
                     f'scale=iw*(1+{r}):ih*(1+{r}), crop=iw/(1+{r}):ih/(1+{r}):(iw/(1+{r}))*{r}/2:(ih/(1+{r}))*{r}/2']
 
             elif name == 'resolution':
+                # scale should be even number for h264
                 if param['selector'] == 'ratio':
                     r = (param['value'] + 100) / 100
-                    options += [f'scale=ceil({r}*iw):ceil({r}*ih)']
+                    options += [f'scale=ceil({r}*iw/2)*2:ceil({r}*ih/2)*2']
                 elif param['selector'] == 'preset':
                     if param['value'] == 'CIF':
                         options += ["scale = 'if(gte(iw\,ih)\,352\,240)':'if(gte(iw\,ih)\,240\,352)'"]
@@ -226,7 +227,7 @@ class Video:
                         options += ["scale = 'if(gte(iw\,ih)\,3840\,2160)':'if(gte(iw\,ih)\,2160\,3840)'"]
 
                 elif param['selector'] == 'value':
-                    options += [f'scale={param["w"]}:{param["h"]}']
+                    options += [f'scale=ceil({param["w"]}/2)*2:ceil({param["h"]}/2)*2']
 
             elif name == 'caption':
                 text = param['text']

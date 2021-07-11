@@ -892,17 +892,18 @@ class VideoEditor(QWidget):
 
             if self.resolution_value.isChecked():
                 w = self.resolution_value_w.text()
+                h = self.resolution_value_h.text()
+
+                if w != '0' and h != '0' and w != '' and h != '':
+                    self.core.add_transform({'name': key, 'param': {'selector': 'value', 'w': int(w), 'h': int(h)}})
+
                 if w == '' or w == '0':
                     w, _ = self.core.thumbnail.size
                     self.resolution_value_w.setText(str(w))
 
-                h = self.resolution_value_h.text()
                 if h == '' or h == '0':
                     _, h = self.core.thumbnail.size
                     self.resolution_value_h.setText(str(h))
-
-                if w != '0' and h != 0 and w != '' and h != '':
-                    self.core.add_transform({'name': key, 'param': {'selector': 'value', 'w': int(w), 'h': int(h)}})
 
                 # if w == '' or w == '0' or h == '' or h == '0':
                 #     w, h = self.core.thumbnail.size
