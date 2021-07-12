@@ -3,48 +3,60 @@ from core import *
 import sys
 import json
 import os
-
+import traceback
 
 if __name__ == '__main__':
     argv = sys.argv
     argc = len(argv)
 
     assert argc == 5, f'{argc} {argv}'
-
+    msg = ' '.join(argv)
     _, path, target, trn, suffix = argv
-    assert os.path.exists(path), f'{path} isn\'t exist'
-
-    assert os.path.isdir(target), f'{target} is not directory'
-    if not os.path.exists(target):
-        os.makedirs(target)
-    assert os.path.exists(trn), f'{trn} isn\'t exist'
-
-    path=os.path.normpath(os.path.normcase(path))
-    target=os.path.normpath(os.path.normcase(target))
+    path = os.path.normpath(os.path.normcase(path))
     name, ext = os.path.splitext(os.path.basename(path))
-    output = os.path.join(target, f'{name}{suffix}{ext}')
 
-    video = Video(path)
-    transform = json.load(open(trn, 'r'))
+    target = os.path.normpath(os.path.normcase(target))
+    log = os.path.join(target, f'{name}{suffix}_END.log')
+    try:
 
-    cmd = video.build_ffmpeg_transform_command(output, transforms=transform['transform'])
+        if not os.path.exists(path):
+            raise Exception(f'{path} doesn\'t exist.')
 
-    pipe = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=False)
-    line = [l.decode('utf8').strip() for l in pipe.stdout.readlines()]
+        if not os.path.exists(trn):
+            raise Exception(f'{trn} doesn\'t exist.')
 
-    pipe.wait()
+        if not os.path.exists(target):
+            os.makedirs(target)
 
-    if pipe.returncode == 0:
-        log = os.path.join(target, f'{name}{suffix}_END.log')
-    else:
+        output = os.path.join(target, f'{name}{suffix}{ext}')
+
+        msg += '\n'
+        msg += f'input : {os.path.normcase(path).capitalize()}\n'
+        msg += f'output : {os.path.normcase(output).capitalize()}\n'
+
+        video = Video(path)
+        transform = json.load(open(trn, 'r'))
+
+        cmd = video.build_ffmpeg_transform_command(output, transforms=transform['transform'])
+
+        pipe = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=False)
+        line = [l.decode('utf8').strip() for l in pipe.stdout.readlines()]
+
+        pipe.wait()
+
+        msg += f'command: {cmd}\n'
+        msg += 'log : \n\t\t'
+        msg += '\n\t\t'.join(line)
+
+        if pipe.returncode != 0:
+            raise Exception('Fail to execute ffmpeg Command.')
+
+    except Exception as e:
         log = os.path.join(target, f'{name}{suffix}_FAIL.log')
+        msg += '\n'
+        msg += traceback.format_exc()
 
-    text = f'input : {os.path.normcase(path).capitalize()}\n'
-    text += f'output : {os.path.normcase(output).capitalize()}\n'
-    text += f'command: {cmd}\n'
-    text += 'log : \n\t\t'
-    text += '\n\t\t'.join(line)
-
-    with open(log, 'w') as f:
-        f.write(text)
-
+    finally:
+        print(log)
+        with open(log, 'w') as f:
+            f.write(msg)
