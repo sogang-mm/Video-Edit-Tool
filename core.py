@@ -259,11 +259,15 @@ class Video:
                 options = [f'{prefix}[input][logo]overlay=(main_w-overlay_w)*{x}:(main_h-overlay_h)*{y}']
 
         filter_complex_param = ','.join(options)
-        format = ['ffmpeg', '-hide_banner', '-y', '-i', 'input_video_path','-max_muxing_queue_size','9999','-q:v','0']
+        format = ['ffmpeg', '-hide_banner', '-y', '-i', 'input_video_path']
 
         if extra_input is not None:
             format += ['-i', extra_input]
-        format += ['-filter_complex', f'{filter_complex_param}', 'target_video_path']
+
+        format += ['-max_muxing_queue_size', '9999',
+                   '-q:v', '0',
+                   '-filter_complex', f'{filter_complex_param}',
+                   'target_video_path']
 
         return format
 
@@ -408,7 +412,7 @@ if __name__ == '__main__':
     trn = {'transform': [
         {'name': 'resolution',
          'param':
-             {'selector':'ratio',
+             {'selector': 'ratio',
               'value': +30,
               }},
     ]}
