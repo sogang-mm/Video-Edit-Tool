@@ -259,7 +259,7 @@ class Video:
                 options = [f'{prefix}[input][logo]overlay=(main_w-overlay_w)*{x}:(main_h-overlay_h)*{y}']
 
         filter_complex_param = ','.join(options)
-        format = ['ffmpeg', '-hide_banner', '-y', '-i', 'input_video_path']
+        format = ['ffmpeg', '-hide_banner', '-y', '-i', 'input_video_path','-max_muxing_queue_size','9999','-q:v','0']
 
         if extra_input is not None:
             format += ['-i', extra_input]
@@ -401,20 +401,19 @@ class pQueue(Queue):
 
 
 if __name__ == '__main__':
-    v = Video('a.mp4')
+    v = Video('outputs/00100301235.mp4')
     thumb = v.get_thumbnail_with_subprocess(100, 200)
     # ImageHelper.show(thumb)
 
     trn = {'transform': [
-        {'name': 'logo',
+        {'name': 'resolution',
          'param':
-             {'path': 'C:\\Users\\ms\\Documents\\ShareX\\Screenshots\\2021-04\\b.jpg',
-              'x': 30,
-              'y': 50,
-              'size': 10}},
-        {'name': 'brightness', 'param': {'value': 20}}]}
+             {'selector':'ratio',
+              'value': +30,
+              }},
+    ]}
 
-    o = v.build_ffmpeg_transform_command('o.mp4', transforms=trn['transform'])
-    print(o)
+    o = v.build_ffmpeg_transform_command('outputs/test.mp4', transforms=trn['transform'])
+    print(' '.join(o))
 
-    v.run_transform_with_subprocess('p.mp4', transforms=trn['transform'])
+    # v.run_transform_with_subprocess('outputs/test.mp4', transforms=trn['transform'])
