@@ -4,6 +4,7 @@ import sys
 import json
 import os
 import traceback
+import shutil
 
 if __name__ == '__main__':
     argv = sys.argv
@@ -35,21 +36,24 @@ if __name__ == '__main__':
         msg += f'output : {os.path.normcase(output).capitalize()}\n'
 
         video = Video(path)
-        transform = json.load(open(trn, 'r'))
+        transform = json.load(open(trn, 'r'))['transform']
 
-        cmd = video.build_ffmpeg_transform_command(output, transforms=transform['transform'])
+        if len(transform):
+            cmd = video.build_ffmpeg_transform_command(output, transforms=transform)
 
-        pipe = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=False)
-        line = [l.decode('utf8').strip() for l in pipe.stdout.readlines()]
+            pipe = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=False)
+            line = [l.decode('utf8').strip() for l in pipe.stdout.readlines()]
 
-        pipe.wait()
+            pipe.wait()
 
-        msg += f'command: {cmd}\n'
-        msg += 'log : \n\t\t'
-        msg += '\n\t\t'.join(line)
+            msg += f'command: {cmd}\n'
+            msg += 'log : \n\t\t'
+            msg += '\n\t\t'.join(line)
 
-        if pipe.returncode != 0:
-            raise Exception('Fail to execute ffmpeg Command.')
+            if pipe.returncode != 0:
+                raise Exception('Fail to execute ffmpeg Command.')
+        else:
+            shutil.copy2(path, output)
 
     except Exception as e:
         log = os.path.join(target, f'{name}{suffix}_FAIL.log')

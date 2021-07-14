@@ -264,10 +264,15 @@ class Video:
         if extra_input is not None:
             format += ['-i', extra_input]
 
-        format += ['-max_muxing_queue_size', '9999',
-                   '-q:v', '0',
-                   '-filter_complex', f'{filter_complex_param}',
-                   'target_video_path']
+
+        if len(transforms):
+            format += ['-max_muxing_queue_size', '9999',
+                       '-q:v', '0',
+                       '-filter_complex', f'{filter_complex_param}']
+        else:
+            format+=['-c','copy']
+
+        format += ['target_video_path']
 
         return format
 
