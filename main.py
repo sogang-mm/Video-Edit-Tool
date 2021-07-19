@@ -344,7 +344,7 @@ class VideoEditor(QWidget):
         camcording_layout.addWidget(self.camcording_path, 0, 1, 1, 3)
         camcording_layout.addWidget(self.camcording_path_button, 0, 4, 1, 1)
         camcording_layout.addWidget(self.camcording_reset_button, 0, 5, 1, 1)
-        camcording_layout.addWidget(QLabel('Ratio'), 1, 0, 1, 1)
+        camcording_layout.addWidget(QLabel('length ratio'), 1, 0, 1, 1)
         camcording_layout.addWidget(self.camcording_slider, 1, 1, 1, 4)
         camcording_layout.addWidget(self.camcording_slider_label, 1, 5, 1, 1)
 

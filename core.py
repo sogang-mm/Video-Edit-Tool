@@ -265,12 +265,13 @@ class Video:
 
                 extra_input = camcording_path
 
-                prefix = f'[0][1]scale2ref=w=iw*sqrt({ratio}):h=ih*sqrt({ratio})[input][img];'
+                # prefix = f'[0][1]scale2ref=w=iw*sqrt({ratio}):h=ih*sqrt({ratio})[input][img];'
+                prefix = f'[1][0]scale2ref=w=iw*(1+{ratio}):h=ih*(1+{ratio})[img][input];'
 
                 if len(options):
                     prefix += f"[input]{','.join(options)}[input];"
 
-                options = [f'{prefix}[img][input] overlay=(W-w)/2:(H-h)/2']
+                options = [f'{prefix}[img][input]overlay=(W-w)/2:(H-h)/2']
 
         filter_complex_param = ','.join(options)
         format = ['ffmpeg', '-hide_banner', '-y', '-i', 'input_video_path']
@@ -406,7 +407,8 @@ class ImageHelper:
                                param['x'], param['y'])
 
             elif name == 'camcording':
-                im = itrn.camcording(im, param['path'], param['ratio'])
+                frame_mata = vi.meta
+                im = itrn.camcording(im, param['path'], param['ratio'], frame_mata)
 
         return im
 
