@@ -86,6 +86,22 @@ def logo(im, logo, size, x, y):
     return t_im
 
 
+def camcording(im, bg, ratio):
+    l = Image.open(bg).convert('RGB')
+    t_im = im.copy()
+
+    lw, lh = l.size
+
+    r = math.sqrt(ratio / 100)
+
+    t_im = t_im.resize((int(lw * r), int(lh * r)))
+
+    t_w, t_h = t_im.size
+    l.paste(t_im, (int((lw - t_w) / 2), int((lh - t_h) / 2)))
+
+    return l
+
+
 def caption(im, text, font_path, pt, font_color, x, y, v_w):
     l = im.copy()  # fg
     w, h = l.size

@@ -315,6 +315,41 @@ class VideoEditor(QWidget):
 
         self.caption_group.setLayout(caption_layout)
 
+        # Transforms - Camcording camcording
+
+        self.camcording_group = QGroupBox('Camcording')
+        self.camcording_group.setCheckable(True)
+        self.camcording_group.setChecked(False)
+
+        self.camcording_path = QLineEdit(CAMCORDING_DEFAULT)
+        self.camcording_path.setReadOnly(True)
+        self.camcording_path_button = QToolButton()
+        self.camcording_reset_button = QToolButton()
+        self.camcording_reset_button.setIcon(qta.icon('fa5s.sync-alt',
+                                                options=[{'scale_factor': 1}]))
+        self.camcording_reset_button.setToolTip('Load default logo image.')
+        self.camcording_path_button.setIcon(qta.icon('ei.folder-open',
+                                               options=[{'scale_factor': 1}]))
+        self.camcording_path_button.setToolTip('Browse logo image.')
+
+        self.camcording_slider = QSlider(Qt.Horizontal)
+        self.camcording_slider.setRange(50, 100)
+        self.camcording_slider.setValue(75)
+        self.camcording_slider.setSingleStep(5)
+        self.camcording_slider_label = QLabel(f'{75:4} %')
+        self.camcording_slider_label.setAlignment(Qt.AlignCenter)
+
+        camcording_layout = QGridLayout()
+        camcording_layout.addWidget(QLabel('Path'), 0, 0, 1, 1)
+        camcording_layout.addWidget(self.camcording_path, 0, 1, 1, 3)
+        camcording_layout.addWidget(self.camcording_path_button, 0, 4, 1, 1)
+        camcording_layout.addWidget(self.camcording_reset_button, 0, 5, 1, 1)
+        camcording_layout.addWidget(QLabel('Ratio'), 1, 0, 1, 1)
+        camcording_layout.addWidget(self.camcording_slider, 1, 1, 1, 4)
+        camcording_layout.addWidget(self.camcording_slider_label, 1, 5, 1, 1)
+
+        self.camcording_group.setLayout(camcording_layout)
+
         # Transforms - Border
         self.border_group = QGroupBox('Border')
         self.border_group.setCheckable(True)
@@ -403,10 +438,11 @@ class VideoEditor(QWidget):
 
         transform_layout.addWidget(self.logo_group, 5, 0, 1, 2)
         transform_layout.addWidget(self.caption_group, 6, 0, 1, 2)
-        transform_layout.addWidget(self.border_group, 7, 0, 1, 2)
-        transform_layout.addWidget(self.crop_group, 8, 0, 1, 2)
-        transform_layout.addWidget(self.resolution_group, 9, 0, 1, 2)
-        transform_layout.addWidget(reset_btn, 10, 1, 1, 1)
+        transform_layout.addWidget(self.camcording_group, 7, 0, 1, 2)
+        transform_layout.addWidget(self.border_group, 8, 0, 1, 2)
+        transform_layout.addWidget(self.crop_group, 9, 0, 1, 2)
+        transform_layout.addWidget(self.resolution_group, 10, 0, 1, 2)
+        transform_layout.addWidget(reset_btn, 11, 1, 1, 1)
 
         # transform_layout.addWidget(self.border_group, 6, 0, 1, 2)
         # transform_layout.addWidget(self.crop_group, 7, 0, 1, 2)
@@ -495,6 +531,13 @@ class VideoEditor(QWidget):
         self.caption_color.clicked.connect(self.e_cationColor)
         self.caption_x_slider.valueChanged.connect(self.e_captionChanged)
         self.caption_y_slider.valueChanged.connect(self.e_captionChanged)
+
+        self.camcording_group.clicked.connect(self.e_camcordingChanged)
+        self.camcording_path_button.clicked.connect(self.e_camcording_btn_clicked)
+        self.camcording_reset_button.clicked.connect(self.e_camcording_reset_btn_clicked)
+
+        self.camcording_path.textChanged.connect(self.e_camcordingChanged)
+        self.camcording_slider.valueChanged.connect(self.e_camcordingChanged)
 
         self.border_group.clicked.connect(self.e_borderChanged)
         self.border_w_slider.valueChanged.connect(self.e_borderChanged)
@@ -781,6 +824,10 @@ class VideoEditor(QWidget):
         key = 'logo'
         self.core.remove_transform(key)
 
+        if self.camcording_group.isChecked():
+            self.core.remove_transform('camcording')
+            self.camcording_group.setChecked(False)
+
         if self.logo_group.isChecked():
             x = self.logo_x_slider.value()
             y = self.logo_y_slider.value()
@@ -840,6 +887,35 @@ class VideoEditor(QWidget):
             self.caption_color.setStyleSheet('QWidget { background-color: %s }' % col.name())
 
             self.e_captionChanged()
+
+    def e_camcordingChanged(self, value):
+        print('[Event - camcording changed]')
+        key = 'camcording'
+        self.core.remove_transform(key)
+
+        if self.logo_group.isChecked():
+            self.core.remove_transform('logo')
+            self.logo_group.setChecked(False)
+
+        if self.camcording_group.isChecked():
+            ratio = self.camcording_slider.value()
+
+            self.core.add_transform({'name': 'camcording',
+                                     'param': {'path': self.camcording_path.text(),
+                                               'ratio': ratio}})
+
+            self.camcording_slider_label.setText(f'{ratio:4} %')
+
+        tt = self.core.apply_thumbnail_transform(CANVAS_WIDTH, CANVAS_HEIGHT)
+        self.viewer_show_preview(tt)
+
+    def e_camcording_reset_btn_clicked(self):
+        self.camcording_path.setText(CAMCORDING_DEFAULT)
+
+    def e_camcording_btn_clicked(self):
+        path, _ = QFileDialog.getOpenFileName(self, 'Select Logo Image', FILE_DIALOG_ROOT, '*.jpg')
+        if path != '':
+            self.camcording_path.setText(path)
 
     def e_borderChanged(self, value):
         print('[Event - Border changed]')

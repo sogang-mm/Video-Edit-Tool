@@ -162,6 +162,7 @@ class Video:
     def build_ffmpeg_transform_command_format(self, transforms):
         options = []
         extra_input = None
+
         for t in transforms:
             name, param = t['name'], t['param']
             if name == 'brightness':
@@ -258,12 +259,24 @@ class Video:
 
                 options = [f'{prefix}[input][logo]overlay=(main_w-overlay_w)*{x}:(main_h-overlay_h)*{y}']
 
+            elif name == 'camcording':
+                camcording_path = param['path']
+                ratio = param['ratio'] / 100
+
+                extra_input = camcording_path
+
+                prefix = f'[0][1]scale2ref=w=iw*sqrt({ratio}):h=ih*sqrt({ratio})[input][img];'
+
+                if len(options):
+                    prefix += f"[input]{','.join(options)}[input];"
+
+                options = [f'{prefix}[img][input] overlay=(W-w)/2:(H-h)/2']
+
         filter_complex_param = ','.join(options)
         format = ['ffmpeg', '-hide_banner', '-y', '-i', 'input_video_path']
 
         if extra_input is not None:
             format += ['-i', extra_input]
-
 
         if len(transforms):
             format += ['-max_muxing_queue_size', '9999',
@@ -391,6 +404,9 @@ class ImageHelper:
                                param['path'],
                                param['size'],
                                param['x'], param['y'])
+
+            elif name == 'camcording':
+                im = itrn.camcording(im, param['path'], param['ratio'])
 
         return im
 
