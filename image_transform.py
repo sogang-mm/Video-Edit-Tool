@@ -13,6 +13,7 @@ def time(func):
 
     return wrap
 
+
 # function pointer
 def time2(func, *args, **kwargs):
     t1 = datetime.now()
@@ -72,15 +73,14 @@ def logo(im, logo, size, x, y):
 
     lw, lh = l.size
     w, h = im.size
-    r = math.sqrt(w * h * size/(100*lw* lh))
 
-    nlw = int(r * lw)
-    nlh = int(r * lh)
+    r = math.sqrt(w * h * size * 0.01 / lw / lh)
+    nlw, nlh = int(r * lw), int(r * lh)
+
+    lx = int((w - nlw) * x * 0.01)
+    ly = int((h - nlh) * y * 0.01)
+
     nl = l.resize((nlw, nlh))
-
-    lx = int((w - nlw) * x / 100)
-    ly = int((h - nlh) * y / 100)
-
     t_im.paste(nl, (lx, ly))
 
     return t_im
@@ -97,7 +97,7 @@ def camcording(im, bg, ratio, frame_meta):
     l = l.resize((int(frame_meta['width'] * (1 + r)), int(frame_meta['height'] * (1 + r))))
 
     lw, lh = l.size
-    print(f'lw : {lw}, lh : {lh}')
+    # print(f'lw : {lw}, lh : {lh}')
     l.paste(t_im, (int((lw - t_w) / 2), int((lh - t_h) / 2)))
 
     return l
@@ -142,11 +142,7 @@ def crop(im, v):
     t_im = im.crop((left, top, right, bottom))
     return t_im
 
-
 # def show(im):
 #     import matplotlib.pyplot as plt
 #     plt.imshow(im)
 #     plt.show()
-
-
-

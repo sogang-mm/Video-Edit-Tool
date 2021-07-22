@@ -326,17 +326,17 @@ class VideoEditor(QWidget):
         self.camcording_path_button = QToolButton()
         self.camcording_reset_button = QToolButton()
         self.camcording_reset_button.setIcon(qta.icon('fa5s.sync-alt',
-                                                options=[{'scale_factor': 1}]))
-        self.camcording_reset_button.setToolTip('Load default logo image.')
+                                                      options=[{'scale_factor': 1}]))
+        self.camcording_reset_button.setToolTip('Load default background.')
         self.camcording_path_button.setIcon(qta.icon('ei.folder-open',
-                                               options=[{'scale_factor': 1}]))
+                                                     options=[{'scale_factor': 1}]))
         self.camcording_path_button.setToolTip('Browse logo image.')
 
         self.camcording_slider = QSlider(Qt.Horizontal)
         self.camcording_slider.setRange(50, 100)
-        self.camcording_slider.setValue(75)
+        self.camcording_slider.setValue(50)
         self.camcording_slider.setSingleStep(5)
-        self.camcording_slider_label = QLabel(f'{75:4} %')
+        self.camcording_slider_label = QLabel(f'{50:4} %')
         self.camcording_slider_label.setAlignment(Qt.AlignCenter)
 
         camcording_layout = QGridLayout()
@@ -516,42 +516,40 @@ class VideoEditor(QWidget):
         self.framerate.currentIndexChanged.connect(self.e_framerateChanged)
         self.grayscale.currentIndexChanged.connect(self.e_grayscaleChanged)
 
-        self.logo_group.clicked.connect(self.e_logoChanged)
-        self.logo_path_button.clicked.connect(self.e_logo_btn_clicked)
-        self.logo_reset_button.clicked.connect(self.e_logo_reset_btn_clicked)
-
+        self.logo_group.toggled.connect(self.e_logoChanged)
         self.logo_path.textChanged.connect(self.e_logoChanged)
         self.logo_size.currentIndexChanged.connect(self.e_logoChanged)
         self.logo_x_slider.valueChanged.connect(self.e_logoChanged)
         self.logo_y_slider.valueChanged.connect(self.e_logoChanged)
+        self.logo_path_button.clicked.connect(self.e_logo_btn_clicked)
+        self.logo_reset_button.clicked.connect(self.e_logo_reset_btn_clicked)
 
-        self.caption_group.clicked.connect(self.e_captionChanged)
+        self.caption_group.toggled.connect(self.e_captionChanged)
         self.caption_input.textChanged.connect(self.e_captionChanged)
         self.caption_size.currentIndexChanged.connect(self.e_captionChanged)
-        self.caption_color.clicked.connect(self.e_cationColor)
         self.caption_x_slider.valueChanged.connect(self.e_captionChanged)
         self.caption_y_slider.valueChanged.connect(self.e_captionChanged)
+        self.caption_color.clicked.connect(self.e_cationColor)
 
-        self.camcording_group.clicked.connect(self.e_camcordingChanged)
+        self.camcording_group.toggled.connect(self.e_camcordingChanged)
+        self.camcording_path.textChanged.connect(self.e_camcordingChanged)
+        self.camcording_slider.valueChanged.connect(self.e_camcordingChanged)
         self.camcording_path_button.clicked.connect(self.e_camcording_btn_clicked)
         self.camcording_reset_button.clicked.connect(self.e_camcording_reset_btn_clicked)
 
-        self.camcording_path.textChanged.connect(self.e_camcordingChanged)
-        self.camcording_slider.valueChanged.connect(self.e_camcordingChanged)
-
-        self.border_group.clicked.connect(self.e_borderChanged)
+        self.border_group.toggled.connect(self.e_borderChanged)
         self.border_w_slider.valueChanged.connect(self.e_borderChanged)
         self.border_h_slider.valueChanged.connect(self.e_borderChanged)
 
-        self.crop_group.clicked.connect(self.e_cropChanged)
+        self.crop_group.toggled.connect(self.e_cropChanged)
         self.crop_slider.valueChanged.connect(self.e_cropChanged)
 
-        self.resolution_group.clicked.connect(self.e_resolutionChanged)
-        self.resolution_ratio.clicked.connect(self.e_resolutionChanged)
+        self.resolution_group.toggled.connect(self.e_resolutionChanged)
+        self.resolution_ratio.toggled.connect(self.e_resolutionChanged)
         self.resolution_ratio_combobox.currentIndexChanged.connect(self.e_resolutionChanged)
-        self.resolution_preset.clicked.connect(self.e_resolutionChanged)
+        self.resolution_preset.toggled.connect(self.e_resolutionChanged)
         self.resolution_preset_combobox.currentIndexChanged.connect(self.e_resolutionChanged)
-        self.resolution_value.clicked.connect(self.e_resolutionChanged)
+        self.resolution_value.toggled.connect(self.e_resolutionChanged)
         self.resolution_value_w.textChanged.connect(self.e_resolutionChanged)
         self.resolution_value_h.textChanged.connect(self.e_resolutionChanged)
 
@@ -631,9 +629,9 @@ class VideoEditor(QWidget):
 
         self.logo_group.setChecked(False)
         self.logo_x_slider.setValue(50)
-        self.logo_x_slider_label.setText(f'{0:4} %')
+        self.logo_x_slider_label.setText(f'{50:4} %')
         self.logo_y_slider.setValue(50)
-        self.logo_y_slider_label.setText(f'{0:4} %')
+        self.logo_y_slider_label.setText(f'{50:4} %')
         self.logo_size.setCurrentIndex(0)
         self.logo_path.setText(LOGO_DEFAULT)
 
@@ -642,9 +640,14 @@ class VideoEditor(QWidget):
         self.caption_color.setStyleSheet('QWidget { background-color: %s }' % CAPTION_COLOR_DEFAULT)
         self.caption_input.setText(CAPTION_DEFAULT)
         self.caption_x_slider.setValue(50)
-        self.caption_x_slider_label.setText(f'{0:4} %')
+        self.caption_x_slider_label.setText(f'{50:4} %')
         self.caption_y_slider.setValue(75)
-        self.caption_y_slider_label.setText(f'{0:4} %')
+        self.caption_y_slider_label.setText(f'{75:4} %')
+
+        self.camcording_group.setChecked(False)
+        self.camcording_slider.setValue(50)
+        self.camcording_slider_label.setText(f'{50:4} %')
+        self.camcording_path.setText(CAMCORDING_DEFAULT)
 
         self.border_group.setChecked(False)
         self.border_w_slider.setValue(0)
@@ -694,11 +697,13 @@ class VideoEditor(QWidget):
             # preset = pkl.load(preset_file)
             # preset_file.close()
             preset = json.load(open(path, 'r'))
+
             if not isinstance(preset, dict) or not preset.get('transform') or not isinstance(preset['transform'], list):
                 preset = {'transform': []}
             self.e_reset_transform()
 
             for p in preset['transform']:
+                print(p)
                 name = p.get('name')
                 param = p.get('param')
                 if name == 'brightness':
@@ -721,34 +726,44 @@ class VideoEditor(QWidget):
 
                 elif name == 'logo' and os.path.exists(param['path']) and param['path'].endswith('.jpg'):
                     # file validation
-                    self.logo_group.setChecked(True)
                     self.logo_path.setText(param['path'])
                     self.logo_x_slider.setValue(param['x'])
                     self.logo_y_slider.setValue(param['y'])
                     self.logo_size.setCurrentText(f"{param['size']} %")
+                    self.logo_group.setChecked(True)
 
                 elif name == 'border':
-                    self.border_group.setChecked(True)
                     self.border_w_slider.setValue(param['w'])
                     self.border_h_slider.setValue(param['h'])
+                    self.border_group.setChecked(True)
 
                 elif name == 'crop':
-                    self.crop_group.setChecked(True)
                     self.crop_slider.setValue(param['value'])
+                    self.crop_group.setChecked(True)
 
                 elif name == 'resolution':
-                    self.resolution_group.setChecked(True)
                     if param['selector'] == 'ratio':
-                        self.resolution_ratio.setChecked(True)
                         self.resolution_ratio_combobox.setCurrentText(f"{param['value']:+} %")
+                        self.resolution_ratio.setChecked(True)
                     if param['selector'] == 'preset':
-                        self.resolution_preset.setChecked(True)
                         self.resolution_preset_combobox.setCurrentText(param['value'])
+                        self.resolution_preset.setChecked(True)
                     if param['selector'] == 'value':
-                        self.resolution_value.setChecked(True)
                         self.resolution_value_w.setText(f"{param['w']}")
                         self.resolution_value_h.setText(f"{param['h']}")
-
+                        self.resolution_value.setChecked(True)
+                    self.resolution_group.setChecked(True)
+                elif name == 'caption':
+                    self.caption_size.setCurrentText(f"{param['pt']} pt")
+                    self.caption_color.setStyleSheet('QWidget { background-color: %s }' % param['font_color'])
+                    self.caption_input.setText(param['text'])
+                    self.caption_x_slider.setValue(param['x'])
+                    self.caption_y_slider.setValue(param['y'])
+                    self.caption_group.setChecked(True)
+                elif name == 'camcording':
+                    self.camcording_path.setText(param['path'])
+                    self.camcording_slider.setValue(param['ratio'])
+                    self.camcording_group.setChecked(True)
 
     def e_save_preset_btn_clicked(self):
         path, _ = QFileDialog.getSaveFileName(self, 'Save Preset', PRESET_DEFAULT_FILE)
@@ -824,10 +839,6 @@ class VideoEditor(QWidget):
         key = 'logo'
         self.core.remove_transform(key)
 
-        if self.camcording_group.isChecked():
-            self.core.remove_transform('camcording')
-            self.camcording_group.setChecked(False)
-
         if self.logo_group.isChecked():
             x = self.logo_x_slider.value()
             y = self.logo_y_slider.value()
@@ -892,10 +903,6 @@ class VideoEditor(QWidget):
         print('[Event - camcording changed]')
         key = 'camcording'
         self.core.remove_transform(key)
-
-        if self.logo_group.isChecked():
-            self.core.remove_transform('logo')
-            self.logo_group.setChecked(False)
 
         if self.camcording_group.isChecked():
             ratio = self.camcording_slider.value()
@@ -981,14 +988,6 @@ class VideoEditor(QWidget):
                     _, h = self.core.thumbnail.size
                     self.resolution_value_h.setText(str(h))
 
-                # if w == '' or w == '0' or h == '' or h == '0':
-                #     w, h = self.core.thumbnail.size
-                #     self.resolution_value_w.setText(str(w))
-                #     self.resolution_value_h.setText(str(h))
-                # else:
-                #     self.core.add_transform({'name': key,
-                #                              'param': {'selector': 'value', 'w': int(w), 'h': int(h)}})
-
         tt = self.core.apply_thumbnail_transform(CANVAS_WIDTH, CANVAS_HEIGHT)
         self.viewer_show_preview(tt)
 
@@ -1073,12 +1072,18 @@ class VideoEditor(QWidget):
                 dlg.exec_()
 
     def make_script(self, videos, target):
-        target = [os.path.join(target, os.path.basename(v.path)) for v in videos]
-        format = self.core.get_ffmpeg_transform_command_format()
-
         lines = []
-        for v, t in zip(videos, target):
-            lines.append(' '.join(v.fill_out_transform_command_format(t, format)))
+
+        for v in videos:
+            t = os.path.join(target, os.path.basename(v.path))
+            script = v.build_ffmpeg_transform_command(t, self.core.transforms)
+            for n, s in enumerate(script):
+                if s == '-filter_complex':
+                    script[n + 1] = f'\"{script[n + 1]}\"'
+                    break
+
+            lines.append(' '.join(script))
+
         return '\n'.join(lines)
 
     def close_video(self):
@@ -1178,8 +1183,7 @@ class VideoEditor(QWidget):
 
         target = [os.path.join(target, os.path.basename(v.path)) for v in videos] if os.path.isdir(target) else [target]
 
-        format = self.core.get_ffmpeg_transform_command_format()
-        tasks = pQueue([{'command': v.fill_out_transform_command_format(t, format),
+        tasks = pQueue([{'command': v.build_ffmpeg_transform_command(t, self.core.transforms),
                          'src': v.path,
                          'dst': t} for v, t in zip(videos, target)])
 

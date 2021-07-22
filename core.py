@@ -7,6 +7,9 @@ from queue import Queue
 import json
 import pickle as pkl
 
+import ffmpeg
+import os
+
 
 # import matplotlib.pyplot as plt
 
@@ -82,8 +85,8 @@ class Core:
         cmd = self.video.build_ffmpeg_transform_command(target, self.transforms)
         return cmd
 
-    def get_ffmpeg_transform_command_format(self):
-        return self.video.build_ffmpeg_transform_command_format(self.transforms)
+    def deprecated_get_ffmpeg_transform_command_format(self):
+        return self.video.deprecated_build_ffmpeg_transform_command_format(self.transforms)
 
 
 class Video:
@@ -159,7 +162,7 @@ class Video:
         return im
 
     # transform
-    def build_ffmpeg_transform_command_format(self, transforms):
+    def deprecated_build_ffmpeg_transform_command_format(self, transforms):
         options = []
         extra_input = None
 
@@ -169,7 +172,8 @@ class Video:
                 options += [f'eq=brightness={param["value"] / 100}']
 
             elif name == 'contrast':
-                options += [f'eq=contrast={param["value"] * 0.03 + 1}']
+                options += [f'eq=contrast={param["value"] * 0.01 + 1}']
+
 
             elif name == 'flip':
                 if param['value'] == 'horizontal':
@@ -192,6 +196,7 @@ class Video:
 
             elif name == 'grayscale' and param['value']:
                 options += ['format=gray']
+                # options += ['hue=s=0']
 
             elif name == 'border':
                 bw = param['w'] / 100
@@ -284,20 +289,119 @@ class Video:
                        '-q:v', '0',
                        '-filter_complex', f'{filter_complex_param}']
         else:
-            format+=['-c','copy']
+            format += ['-c', 'copy']
 
         format += ['target_video_path']
 
         return format
 
-    def fill_out_transform_command_format(self, target, format):
+    def deprecated_fill_out_transform_command_format(self, target, format):
         return [self.meta['path'] if c == 'input_video_path' else target if c == 'target_video_path' else c for c in
                 format]
 
-    def build_ffmpeg_transform_command(self, target, transforms):
-        format = self.build_ffmpeg_transform_command_format(transforms)
-        cmd = self.fill_out_transform_command_format(target, format)
+    def deprecated_build_ffmpeg_transform_command(self, target, transforms):
+        format = self.deprecated_build_ffmpeg_transform_command_format(transforms)
+        cmd = self.deprecated_fill_out_transform_command_format(target, format)
         return cmd
+
+    def build_ffmpeg_transform_command(self, target, transforms):
+        cmd = ffmpeg.input(self.path)
+
+        iw, ih = self.meta['width'], self.meta['height']
+        for t in transforms:
+            name, param = t['name'], t['param']
+            if name == 'brightness':
+                # default = 0
+                cmd = cmd.filter('eq', brightness=param['value'] * 0.01)
+            elif name == 'contrast':
+                # default = 1 / (-2 ~ 2)
+                cmd = cmd.filter('eq', contrast=param['value'] * 0.01 + 1)
+            elif name == 'flip':
+                if param['value'] == 'horizontal':
+                    cmd = cmd.hflip()
+                elif param['value'] == 'vertical':
+                    cmd = cmd.vflip()
+                elif param['value'] == 'all':
+                    cmd = cmd.hflip().vflip()
+            elif name == 'rotation':
+                if param['value'] == 90:
+                    cmd = cmd.filter('transpose', 1)
+                elif param['value'] == 180:
+                    cmd = cmd.filter('transpose', 2).filter('transpose', 2)
+                elif param['value'] == 270:
+                    cmd = cmd.filter('transpose', 2, 'transpose', 2)
+            elif name == 'framerate':
+                cmd = cmd.filter('fps', param['value'])
+            elif name == 'grayscale' and param['value']:
+                cmd = cmd.filter('hue', s=0)
+            elif name == 'border':
+                bw, bh = param['w'] * 0.01, param['h'] * 0.01
+                cmd = cmd.filter('scale', w=f'ceil(iw*(1-{bw})*0.5)*2', h=f'ceil(ih*(1-{bh})*0.5)*2')
+                cmd = cmd.filter('pad', w=iw, h=ih, x=f'({iw}-iw)*0.5', y=f'({ih}-ih)*0.5', color='black')
+            elif name == 'crop':
+                r = param['value'] * 0.01
+                cw, ch = iw * (1 - r), ih * (1 - r)
+                x, y = (iw - cw) * 0.5, (ih - ch) * 0.5
+                cmd = cmd.filter('crop', w=f'ceil({cw}*0.5)*2', h=f'ceil({ch}*0.5)*2', x=x, y=y)
+                cmd = cmd.filter('scale', w=iw, h=ih)
+
+            elif name == 'resolution':
+                rw, rh = iw, ih
+                if param['selector'] == 'ratio':
+                    r = (param['value'] + 100) * 0.01
+                    rw, rh = iw * r, ih * r
+                elif param['selector'] == 'preset':
+                    val = param['value']
+                    if val == 'CIF':
+                        rw, rh = 352, 240
+                    elif val == 'QCIF':
+                        rw, rh = 176, 144
+                    elif val == 'SD':
+                        rw, rh = 320, 240
+                    elif val == 'HD':
+                        rw, rh = 1280, 720
+                    elif val == '4K-UHD':
+                        rw, rh = 3840, 2160
+
+                    rw, rh = (rw, rh) if iw > ih else (rh, rw)
+                elif param['selector'] == 'value':
+                    rw, rh = param['w'], param['h']
+                cmd = cmd.filter('scale', w=f'ceil({rw}*0.5)*2', h=f'ceil({rh}*0.5)*2')
+
+            elif name == 'caption':
+                font_path = param['font_path']
+                x = param['x'] * 0.01
+                y = param['y'] * 0.01
+                cmd = cmd.filter('drawtext', text=param['text'],
+                                 x=f'(W-tw)*{x}', y=f'(H-th)*{y}',
+                                 fontcolor=param['font_color'], fontsize=param['pt'], fontfile=font_path)
+
+            elif name == 'logo':
+                r = iw * ih * param['size'] * 0.01
+                x, y = param['x'] * 0.01, param['y'] * 0.01
+                logo = ffmpeg.input(param['path'])
+                logo = logo.filter('scale', w='oh*dar', h=f'ih*sqrt({r}/iw/ih)')
+                cmd = cmd.overlay(logo, x=f'(main_w-overlay_w)*{x}', y=f'(main_h-overlay_h)*{y}')
+
+            elif name == 'camcording':
+                r = param['ratio'] * 0.01 + 1.
+                background = ffmpeg.input(param['path'])
+                background = background.filter('scale', w=f'ceil(oh*dar*0.5)*2', h=f'ceil(ih*{r}*0.5)*2')
+
+                cmd = background.overlay(cmd, x=f'(W-w)/2', y='(H-h)/2')
+
+        if len(transforms):
+            kwargs = {'q:v': 0,
+                      'max_muxing_queue_size': 9999}
+        else:
+            kwargs = {'c': 'copy'}
+
+        cmd = cmd.output(target, **kwargs)
+
+        cmd = cmd.global_args('-hide_banner')
+        cmd = cmd.overwrite_output()
+
+        return cmd.compile()
 
     def run_transform_with_subprocess(self, target, transforms):
         def yield_process(p):
@@ -306,12 +410,10 @@ class Video:
                 if line != '':
                     yield line
 
+        # cmd = self.deprecated_build_ffmpeg_transform_command(target, transforms)
         cmd = self.build_ffmpeg_transform_command(target, transforms)
 
         pipe = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=False)
-
-        # for l in yield_process(pipe):
-        #     print(l)
 
         line = [l.decode('utf8').strip() for l in pipe.stdout.readlines()]
         pipe.wait()
