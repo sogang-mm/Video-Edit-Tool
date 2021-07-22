@@ -3,7 +3,6 @@ import platform
 import sys
 import os
 
-
 def resource_path(relative_path):
     if hasattr(sys, '_MEIPASS'):
         return os.path.join(sys._MEIPASS, relative_path)
@@ -60,8 +59,8 @@ THUMBNAIL_RESPONSE_TIME = 1000
 
 VIDEO_SELECTED_COLOR = COLOR_GREEN
 
-LOGO_DEFAULT = resource_path('default_logo.jpg')
-FONT_DEFAULT = resource_path('NanumMyeongjo.ttf')
+LOGO_DEFAULT = resource_path(os.path.join('resource', 'default_logo.jpg'))
+FONT_DEFAULT = resource_path(os.path.join('resource', 'NanumMyeongjo.ttf'))
 CAPTION_DEFAULT = ''
 CAPTION_COLOR_DEFAULT = QColor(0, 0, 0).name()
-CAMCORDING_DEFAULT = resource_path('camcording_default.jpg')
+CAMCORDING_DEFAULT = resource_path(os.path.join('resource', 'camcording_default.jpg'))
